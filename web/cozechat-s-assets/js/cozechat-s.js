@@ -60,7 +60,8 @@ document.getElementById('inputState').addEventListener('click', () => {
         doms.style.display = 'none'
     }
 })
-document.getElementById('inputSending').addEventListener('click', () => {
+// 发送消息的共用函数
+function sendMessage() {
     let str = document.getElementById('input_box').value;
     if (!window.is_speaking && str) {
         let listenBox = document.getElementsByClassName('listen')[document.getElementsByClassName('listen').length - 1];
@@ -70,6 +71,17 @@ document.getElementById('inputSending').addEventListener('click', () => {
         InsertMessage('user', str)
         COZE_CN_Quiz(str);
         document.getElementById('input_box').value = '';
+        // 发送消息后隐藏输入框
+        document.getElementsByClassName('input_box')[0].style.display = 'none';
+    }
+}
+
+document.getElementById('inputSending').addEventListener('click', sendMessage);
+
+// 添加回车键发送功能
+document.getElementById('input_box').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendMessage();
     }
 })
 

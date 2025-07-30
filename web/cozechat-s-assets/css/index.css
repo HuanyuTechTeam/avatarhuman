@@ -14,7 +14,7 @@ body {
     padding: 0;
     position: relative;
     overflow: hidden;
-    background-color: #fff;
+    background-color: #000;
 }
 
 div {
@@ -74,6 +74,7 @@ video {
     width: 100vw;
     height: 100vh;
     z-index: 1;
+    display: none; /* 隐藏背景图片 */
 }
 
 #media .center .center_title {

@@ -1,0 +1,12 @@
+{
+  "wakeWords": ["小度小度。", "小度小度", "小杜小杜。", "小杜小杜"],
+  "langchain": {
+      "kb_name": "test",
+      "model": "qwen2.5-instruct",
+      "score_threshold": 0.6,
+      "prompt_name": "default"
+  },
+  "voice": {
+    "defaultVoiceId": "model_man_oldman01.wav"
+  }
+}

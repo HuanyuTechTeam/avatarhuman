@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebRTC webcam</title>
+    <link href="./langchain-s-assets/css/index.css" rel="stylesheet">
+    <link rel="icon" href="./langchain-s-assets/img/ICO.ico">
+</head>
+
+<body>
+    <div id="operating_box">
+        <!-- <button id="PullFlowStart" onclick="PullFlowStart()">Start</button> -->
+        <button id="PullFlowStop" onclick="PullFlowStop">Stop</button>
+        <form class="form-inline" id="echo-form">
+            <div class="form-group">
+                <textarea cols="2" rows="3" style="width:260px;height:50px;" class="form-control"
+                    id="message">test</textarea>
+            </div>
+            <button type="submit" class="btn btn-default">Send</button>
+        </form>
+    </div>
+
+    <div id="media">
+        <div class="center">
+            <img class="background" src="./image/bg.png" alt="">
+            <!-- 顶部 -->
+            <div class="center_title">
+                <div class="center_title_left">
+                    <img src="./image/logo.png" alt="">
+                    <div>妙手AI</div>
+                </div>
+                <div class="center_title_right" id="Date_box"></div>
+            </div>
+            
+            <!-- 预设问题 -->
+            <div class="PresetProblem_box" style="display: none;">
+                <div class="PresetProblem_center">
+                    <img src="./langchain-s-assets/img/close.png" id="PresetProblem_none" alt="">
+                    <div class="PresetProblem_list">
+                        <div id="PresetProblem_list">
+                            <div class="PresetProblem_item" title="点击发送预设问题">xxxxx</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 文本输入 -->
+            <div class="input_box" style="display: none;">
+                <div class="input_center">
+                    <input id="input_box" autocomplete="off" type="text">
+                    <img id="inputSending" src="./langchain-s-assets/img/fs.png" title="点击发送问题" alt="">
+                </div>
+            </div>
+            <!-- 列表 -->
+            <div class="message_list" id="message-list"></div>
+            <!-- 加载中 -->
+            <div class="center_toload" id="center_toload">
+                <img src="./image/jz.png" class="rotation" alt="">
+                <div>互动问答数字人系统</div>
+            </div>
+            <!-- 视频 -->
+            <div class="video_box">
+                <audio id="audio" autoplay></audio>
+                <video id="video" style="width:100vw;height: 100vh;" muted autoplay playsinline></video>
+            </div>
+            <!-- 开始对话 -->
+            <div class="start" id="start" style="display: none;">
+                <div class="button" style="width: 136px;">
+                    <img src="./langchain-s-assets/img/start.png" alt="">
+                    <div class="button_text" style="width: 100%;">点击开始对话</div>
+                </div>
+            </div>
+            <!-- 操作 -->
+            <div class="center_operating" id="center_operating" style="display: none;">
+                <div class="button" id="stop">
+                    <img src="./langchain-s-assets/img/stop.png" alt="" title="打断">
+                    <div class="button_text" style="width: 100%;">打断</div>
+                </div>
+                <div class="button" id="presets">
+                    <img src="./langchain-s-assets/img/ys.png" alt="" title="预设">
+                    <div class="button_text" style="width: 100%;">预设</div>
+                </div>
+                <div class="button" id="inputState">
+                    <img src="./langchain-s-assets/img/sr.png" alt="" title="输入">
+                    <div class="button_text" style="width: 100%;">输入</div>
+                </div>
+                <div class="button" id="end">
+                    <img src="./langchain-s-assets/img/end.png" alt="" title="结束">
+                    <div class="button_text" style="width: 100%;">结束</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.4.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/0.3.2/sockjs-min.js"></script>
+    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.9.5/dist/ffmpeg.min.js"></script>
+    <script src="./langchain-s-assets/js/langchain-s.js"></script>
+</body>
+
+</html>

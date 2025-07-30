@@ -1,0 +1,392 @@
+html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: '宋体';
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+div {
+    box-sizing: border-box;
+}
+
+button {
+    padding: 8px 16px;
+}
+.video_box {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    z-index: 9 !important;
+}
+video {
+    width: 100%;
+}
+
+#operating_box {
+    position: absolute;
+    left: 200%;
+    transform: translateX(-50%);
+    top: 0;
+    padding: 20px;
+    border: 1px solid #000;
+    background-color: #eee;
+    border-radius: 10px;
+    width: 300px;
+    height: 300px;
+    z-index: 12;
+}
+
+#media {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    z-index: 3;
+}
+
+#media .center {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#media .center .background {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+#media .center .center_title {
+    position: absolute;
+    left: 0;
+    top: 30px;
+    padding: 0 22px;
+    width: 100%;
+    height: 128px;
+    z-index: 99;
+    display: flex;
+}
+
+#media .center .center_title .center_title_left {
+    width: 50%;
+    height: 128px;
+    line-height: 128px;
+    font-size: 50px;
+    font-weight: 700;
+    display: flex;
+}
+
+#media .center .center_title .center_title_right {
+    width: 50%;
+    height: 128px;
+    font-weight: 700;
+    padding-top: 18px;
+    padding-right: 20px;
+    text-align: right;
+}
+
+#media .center .center_title .center_title_left img {
+    width: 128px;
+    height: 128px;
+}
+
+#media .center .center_operating {
+    width: 75px;
+    height: auto;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 12;
+}
+
+#media .center .center_toload {
+    position: absolute;
+    left: 0;
+    bottom: 20%;
+    width: 100%;
+    height: 198px;
+    text-align: center;
+    font-size: 50px;
+    font-weight: 600;
+    z-index: 9;
+}
+
+#media .center .center_toload img {
+    width: 128px;
+    height: 128px;
+    margin-bottom: 20px;
+}
+
+.rotation {
+    animation: rotate 5s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 列表 */
+.message_list {
+    position: absolute;
+    bottom: 12vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 35vh;
+    z-index: 11;
+    overflow-y: auto;
+    padding: 0 80px;
+    overflow-x: hidden;
+}
+
+.message_list::-webkit-scrollbar {
+    width: 0px !important;
+}
+
+.message_list::-webkit-scrollbar-thumb {
+    background: #e5e6eb;
+}
+
+.message_list::-webkit-scrollbar-thumb:hover {
+    background: #c9cdd4;
+}
+
+.message_item {
+    width: 100%;
+    min-height: 88px;
+    padding: 0 100px;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.message_item .message_img {
+    width: 88px;
+    height: 88px;
+    border-radius: 44px;
+    position: absolute;
+}
+
+.ai {
+    text-align: left;
+}
+
+.ai .message_img {
+    left: 0;
+    top: 0;
+}
+
+.ai .message_text {
+    background: rgba(216, 216, 216, 1);
+}
+
+.user {
+    text-align: right;
+}
+
+.user .message_img {
+    right: 0;
+    top: 0;
+}
+
+.user .message_text {
+    background-color: rgba(208, 212, 255, 1);
+}
+
+.message_text {
+    user-select: text !important;
+    width: auto;
+    display: inline-block;
+    min-height: 88px;
+    border-radius: 8px;
+    font-size: 25px;
+    line-height: 44px;
+    font-weight: 500;
+    padding: 22px;
+    word-wrap: break-word;
+}
+
+/* 点击开始对话 */
+#start {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 6vh;
+    width: 136px;
+    height: auto;
+    z-index: 12;
+}
+
+/* 按钮 */
+.button {
+    width: 75px;
+    height: 99px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.button:hover {
+    cursor: pointer;
+}
+
+.button img {
+    width: 75px;
+    height: 75px;
+    border-radius: 38px;
+}
+.button img:hover {
+    cursor: pointer;
+}
+
+.button .button_text {
+    width: 75px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    font-size: 18px;
+    color: #000;
+    font-weight: 700;
+}
+
+/* 预设问题 */
+.PresetProblem_box {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 200px 120px 120px 120px;
+    z-index: 20;
+}
+
+.PresetProblem_center {
+    position: relative;
+    padding: 46px;
+    background-color: rgba(3, 74, 80, 0.5);
+    border-radius: 20px;
+}
+
+.PresetProblem_center img {
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 11;
+}
+
+.PresetProblem_center img:hover {
+    cursor: pointer;
+}
+
+.PresetProblem_list {
+    width: 100%;
+    height: 250px;
+    font-size: 25px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.PresetProblem_list::-webkit-scrollbar {
+    width: 0px !important;
+}
+
+.PresetProblem_list::-webkit-scrollbar-thumb {
+    background: #e5e6eb;
+}
+
+.PresetProblem_list::-webkit-scrollbar-thumb:hover {
+    background: #c9cdd4;
+}
+
+.PresetProblem_item {
+    user-select: text !important;
+    display: inline-block;
+    width: auto;
+    margin-bottom: 20px;
+    background-color: rgba(208, 212, 255, 1);
+    border-radius: 23px;
+    min-height: 46px;
+    line-height: 32px;
+    padding: 12px 26px;
+    font-weight: 700;
+}
+
+.PresetProblem_item:hover {
+    cursor: pointer;
+}
+
+/* 文本输入 */
+.input_box {
+    width: 100%;
+    height: 204px;
+    padding: 0 120px 80px 120px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 20;
+}
+
+.input_center {
+    width: 100%;
+    height: 124px;
+    border-radius: 20px;
+    background-color: rgba(208, 212, 255, 1);
+    padding: 26px;
+    padding-right: 124px;
+    position: relative;
+}
+
+.input_center img {
+    width: 72px;
+    height: 72px;
+    position: absolute;
+    right: 26px;
+    top: 26px;
+}
+
+.input_center img:hover {
+    cursor: pointer;
+}
+
+.input_center input {
+    user-select: text !important;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    line-height: 72px;
+    font-size: 24px;
+    text-align: left;
+    font-weight: 700;
+    padding-left: 20px;
+    border: none !important;
+    border-radius: 20px;
+    background-color: rgba(0, 0, 0, 0);
+}

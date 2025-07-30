@@ -338,7 +338,7 @@ end_recording.addEventListener('click', function () {
     start_recording.style.display = 'inline-block';
     document.getElementById('center_operating').style.display = 'none';
     // 退出互动
-    InsertMessage('AI Studio', '互动结束', true);
+    InsertMessage('AI Studio', '很高兴为您解答', true);
     // 清屏
     document.getElementById('message-list').innerHTML = '';
 });

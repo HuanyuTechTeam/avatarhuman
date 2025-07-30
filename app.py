@@ -207,6 +207,13 @@ async def is_speaking(request):
     params = await request.json()
 
     sessionid = params.get('sessionid',0)
+    if sessionid not in nerfreals or nerfreals[sessionid] is None:
+        return web.Response(
+            content_type="application/json",
+            text=json.dumps(
+                {"code": -1, "data": False, "msg": "Session not found"}
+            ),
+        )
     return web.Response(
         content_type="application/json",
         text=json.dumps(
@@ -277,6 +284,7 @@ if __name__ == '__main__':
     parser.add_argument('--tts', type=str, default='edgetts', help="tts service type") #xtts gpt-sovits cosyvoice index_tts
     parser.add_argument('--REF_FILE', type=str, default="zh-CN-YunxiaNeural")
     parser.add_argument('--REF_TEXT', type=str, default='中药未来的发展方向我相信会越来越好，一点呢是国家大力的支持和发扬中药') # hard code, windows not support read ref_text
+    # parser.add_argument('--REF_TEXT', type=str, default='这段话将用来参考声音的情绪，请用正常的语速和语调朗读一遍。') # shiyi 的语音
     parser.add_argument('--TTS_SERVER', type=str, default='http://127.0.0.1:9880') # http://localhost:9000
     # parser.add_argument('--CHARACTER', type=str, default='test')
     # parser.add_argument('--EMOTION', type=str, default='default')
@@ -359,7 +367,7 @@ if __name__ == '__main__':
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(runner.setup())
-        site = web.TCPSite(runner, '0.0.0.0', opt.listenport)
+        site = web.TCPSite(runner, '127.0.0.1', opt.listenport)
         loop.run_until_complete(site.start())
         if opt.transport=='rtcpush':
             for k in range(opt.max_session):

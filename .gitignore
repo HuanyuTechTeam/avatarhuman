@@ -12,3 +12,4 @@ data/
 *.log
 models/
 venv/
+wav2lip/results/

@@ -3,5 +3,8 @@
   "cozeApi": {
     "token": "Bearer pat_OvvsF6NqVb5dDY1IptveG658TRHMXwBmmB0ZayKkWJTG2h1HyHGkbkYz4cEYQP4Z",
     "botId": "7532791685332795418"
+  },
+  "voice": {
+    "defaultVoiceId": "D:\\metahuman\\avatarhuman250615\\GPT-SoVITS-v2pro-20250604\\ref\\ref_wxb.wav"
   }
 }

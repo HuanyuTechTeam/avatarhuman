@@ -1,7 +1,7 @@
 {
   "wakeWords": ["小度小度。", "小度小度", "小杜小杜。", "小杜小杜"],
   "cozeApi": {
-    "token": "Bearer pat_OvvsF6NqVb5dDY1IptveG658TRHMXwBmmB0ZayKkWJTG2h1HyHGkbkYz4cEYQP4Z",
+    "token": "Bearer sat_7O2pjJ1cbLEfqWmED6czS0oJ7RT24UQcP34YPvk7hCXXKD6xGOmRlTLEzl8CsZm3",
     "botId": "7532791685332795418"
   },
   "voice": {

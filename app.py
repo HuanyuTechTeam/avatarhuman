@@ -285,6 +285,8 @@ if __name__ == '__main__':
     parser.add_argument('--REF_FILE', type=str, default="zh-CN-YunxiaNeural")
     parser.add_argument('--REF_TEXT', type=str, default='中药未来的发展方向我相信会越来越好，一点呢是国家大力的支持和发扬中药') # hard code, windows not support read ref_text
     # parser.add_argument('--REF_TEXT', type=str, default='这段话将用来参考声音的情绪，请用正常的语速和语调朗读一遍。') # shiyi 的语音
+    # parser.add_argument('--REF_TEXT', type=str, default='当归性温味甘，补血活血，常用于妇科疾病') # hard code, windows not support read ref_text
+    # parser.add_argument('--REF_TEXT', type=str, default='当你在积雪初融的高原上走过，看见平坦的大地上傲然挺立这么一株或一排白杨树') # hard code, windows not support read ref_text
     parser.add_argument('--TTS_SERVER', type=str, default='http://127.0.0.1:9880') # http://localhost:9000
     # parser.add_argument('--CHARACTER', type=str, default='test')
     # parser.add_argument('--EMOTION', type=str, default='default')

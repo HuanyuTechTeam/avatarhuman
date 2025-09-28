@@ -301,7 +301,7 @@ async function loadConfig() {
     appConfig = {
       wakeWords: ["小度小度。", "小度小度", "小杜小杜。", "小杜小杜"],
       cozeApi: {
-        token: "Bearer pat_1kKSq7RFVQQCJFQh1Ni0tigyOwzXcac9mwT5nSHQodW4v3IDYAkLDWVWn2tYHt05",
+        token: "Bearer sat_7O2pjJ1cbLEfqWmED6czS0oJ7RT24UQcP34YPvk7hCXXKD6xGOmRlTLEzl8CsZm3",
         botId: "7401082582928588841"
       },
       voice: {

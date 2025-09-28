@@ -343,7 +343,7 @@ class SovitsTTS(BaseTTS):
             'prompt_lang':language,
             'media_type':'ogg',
             'streaming_mode':True,
-            'speed_factor': 1.2
+            'speed_factor': 1.0
         }
         # req["text"] = text
         # req["text_language"] = language

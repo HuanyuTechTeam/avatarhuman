@@ -123,3 +123,5 @@ yarn-error.log*
 *.mp3
 *.wav
 *.flac
+
+nul

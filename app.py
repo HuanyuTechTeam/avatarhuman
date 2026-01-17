@@ -1,5 +1,3 @@
-
-
 # server.py
 from flask import Flask, render_template,send_from_directory,request, jsonify
 from flask_sockets import Sockets
@@ -17,7 +15,7 @@ import torch.multiprocessing as mp
 from aiohttp import web
 import aiohttp
 import aiohttp_cors
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
 from aiortc.rtcrtpsender import RTCRtpSender
 from webrtc import HumanPlayer
 from basereal import BaseReal
@@ -36,8 +34,6 @@ import os
 import platform
 import subprocess
 import sys
-
-
 
 
 
@@ -87,8 +83,9 @@ async def offer(request):
     nerfreals[sessionid] = None
     nerfreal = await asyncio.get_event_loop().run_in_executor(None, build_nerfreal,sessionid)
     nerfreals[sessionid] = nerfreal
-    
-    pc = RTCPeerConnection()
+
+    ice_server = RTCIceServer(urls='stun:stun.miwifi.com:3478')
+    pc = RTCPeerConnection(configuration=RTCConfiguration(iceServers=[ice_server]))
     pcs.add(pc)
 
     @pc.on("connectionstatechange")
@@ -97,10 +94,14 @@ async def offer(request):
         if pc.connectionState == "failed":
             await pc.close()
             pcs.discard(pc)
-            del nerfreals[sessionid]
+            # 安全删除sessionid，避免重复删除
+            if sessionid in nerfreals:
+                del nerfreals[sessionid]
         if pc.connectionState == "closed":
             pcs.discard(pc)
-            del nerfreals[sessionid]
+            # 安全删除sessionid，避免重复删除
+            if sessionid in nerfreals:
+                del nerfreals[sessionid]
 
     player = HumanPlayer(nerfreals[sessionid])
     audio_sender = pc.addTrack(player.audio)
@@ -283,9 +284,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--tts', type=str, default='edgetts', help="tts service type") #xtts gpt-sovits cosyvoice index_tts
     parser.add_argument('--REF_FILE', type=str, default="zh-CN-YunxiaNeural")
-    parser.add_argument('--REF_TEXT', type=str, default='中药未来的发展方向我相信会越来越好，一点呢是国家大力的支持和发扬中药') # hard code, windows not support read ref_text
+    # parser.add_argument('--REF_TEXT', type=str, default='中药未来的发展方向我相信会越来越好，一点呢是国家大力的支持和发扬中药') # hard code, windows not support read ref_text
     # parser.add_argument('--REF_TEXT', type=str, default='这段话将用来参考声音的情绪，请用正常的语速和语调朗读一遍。') # shiyi 的语音
-    # parser.add_argument('--REF_TEXT', type=str, default='当归性温味甘，补血活血，常用于妇科疾病') # hard code, windows not support read ref_text
+    parser.add_argument('--REF_TEXT', type=str, default='当归性温味甘，补血活血，常用于妇科疾病') # hard code, windows not support read ref_text
     # parser.add_argument('--REF_TEXT', type=str, default='当你在积雪初融的高原上走过，看见平坦的大地上傲然挺立这么一株或一排白杨树') # hard code, windows not support read ref_text
     parser.add_argument('--TTS_SERVER', type=str, default='http://127.0.0.1:9880') # http://localhost:9000
     # parser.add_argument('--CHARACTER', type=str, default='test')
@@ -296,7 +297,7 @@ if __name__ == '__main__':
     parser.add_argument('--transport', type=str, default='webrtc') #rtmp webrtc rtcpush
     parser.add_argument('--push_url', type=str, default='http://localhost:1985/rtc/v1/whip/?app=live&stream=livestream') #rtmp://localhost/live/livestream
 
-    parser.add_argument('--max_session', type=int, default=5)  #multi session count
+    parser.add_argument('--max_session', type=int, default=8)  #multi session count
     parser.add_argument('--listenport', type=int, default=8010, help="web listen port")
 
     opt = parser.parse_args()
@@ -369,7 +370,7 @@ if __name__ == '__main__':
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(runner.setup())
-        site = web.TCPSite(runner, '127.0.0.1', opt.listenport)
+        site = web.TCPSite(runner, '0.0.0.0', opt.listenport)
         loop.run_until_complete(site.start())
         if opt.transport=='rtcpush':
             for k in range(opt.max_session):
@@ -389,3 +390,4 @@ if __name__ == '__main__':
     # server.serve_forever()
     
     
+  

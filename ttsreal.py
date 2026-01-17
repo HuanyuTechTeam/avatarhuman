@@ -103,8 +103,8 @@ class indexTTS(BaseTTS):
     def index_tts(self, text, reffile, server_url) -> Iterator[bytes]:
         start = time.perf_counter()
         req={
-            'text':text,
-            'voice_id':reffile
+            'text': text,
+            'audio_paths': [reffile]
         }
         # req["text"] = text
         # req["text_language"] = language
@@ -114,7 +114,7 @@ class indexTTS(BaseTTS):
         # req["streaming_mode"] = True
         try:
             res = requests.post(
-                f"{server_url}/indextts/tts_binary",
+                f"{server_url}/tts_url",
                 json=req,
                 stream=True,
             )

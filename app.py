@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 import torch.multiprocessing as mp
 from aiohttp import web
@@ -8,6 +9,7 @@ from backend.application.session_manager import SessionManager
 from backend.application.session_service import SessionService
 from backend.bootstrap.app_factory import create_app
 from backend.bootstrap.cli import parse_args
+from backend.bootstrap.env import load_env_file
 from backend.domain.settings import AppSettings
 from backend.infrastructure.llm_client import DashScopeLlmClient
 from backend.infrastructure.runtime_factory import RuntimeFactory
@@ -29,11 +31,13 @@ def build_services(settings: AppSettings):
 
 def create_application(settings: AppSettings) -> tuple[web.Application, SessionService]:
     session_manager, orchestrator, session_service = build_services(settings)
+    static_root = Path(settings.static_root)
+    dist_root = static_root / "dist"
     application = create_app(
         session_service=session_service,
         orchestrator=orchestrator,
         session_manager=session_manager,
-        static_path=settings.static_root,
+        static_path=str(dist_root if dist_root.exists() else static_root),
         api_prefixes=settings.api_prefixes,
         static_aliases=settings.static_aliases,
     )
@@ -63,6 +67,7 @@ def main() -> None:
     except RuntimeError:
         pass
 
+    load_env_file()
     args = parse_args()
     logger.info(args)
     settings = AppSettings.from_namespace(args)

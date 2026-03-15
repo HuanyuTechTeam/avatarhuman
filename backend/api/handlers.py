@@ -9,6 +9,7 @@ from aiohttp.web_exceptions import HTTPBadRequest
 from backend.application.orchestrator import AvatarOrchestrator
 from backend.application.session_manager import SessionManager
 from backend.domain.errors import MaxSessionReachedError, SessionNotFoundError, UnsupportedMessageTypeError
+from backend.infrastructure.coze_proxy import create_conversation, stream_chat
 
 
 @dataclass(frozen=True)
@@ -19,6 +20,8 @@ class HandlerBundle:
     set_audiotype: callable
     record: callable
     is_speaking: callable
+    coze_create_conversation: callable
+    coze_chat: callable
 
 
 def json_response(payload: dict, status: int = 200) -> web.Response:
@@ -121,6 +124,34 @@ def create_handler_bundle(
         except (HTTPBadRequest, KeyError, ValueError) as exc:
             return json_response({"code": -1, "msg": str(exc)}, status=400)
 
+    async def coze_create_conversation(_request: web.Request) -> web.Response:
+        payload = await create_conversation()
+        return json_response(payload)
+
+    async def coze_chat(request: web.Request) -> web.StreamResponse:
+        params = await request.json()
+        upstream_session, upstream_response = await stream_chat(params)
+
+        stream_response = web.StreamResponse(
+            status=200,
+            headers={
+                "Content-Type": "text/event-stream; charset=utf-8",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            },
+        )
+        await stream_response.prepare(request)
+
+        try:
+            async for chunk in upstream_response.content.iter_chunked(1024):
+                await stream_response.write(chunk)
+        finally:
+            await upstream_response.release()
+            await upstream_session.close()
+
+        await stream_response.write_eof()
+        return stream_response
+
     return HandlerBundle(
         offer=offer,
         human=human,
@@ -128,6 +159,8 @@ def create_handler_bundle(
         set_audiotype=set_audiotype,
         record=record,
         is_speaking=is_speaking,
+        coze_create_conversation=coze_create_conversation,
+        coze_chat=coze_chat,
     )
 
 
@@ -139,6 +172,8 @@ def register_routes(app: web.Application, handlers: HandlerBundle, prefixes: tup
         ("set_audiotype", handlers.set_audiotype),
         ("record", handlers.record),
         ("is_speaking", handlers.is_speaking),
+        ("coze/conversation/create", handlers.coze_create_conversation),
+        ("coze/chat", handlers.coze_chat),
     )
 
     for prefix in prefixes:

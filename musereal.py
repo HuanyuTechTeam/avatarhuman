@@ -44,6 +44,7 @@ from museasr import MuseASR
 import asyncio
 from av import AudioFrame, VideoFrame
 from basereal import BaseReal
+from backend.domain.paths import build_avatar_path
 
 from tqdm import tqdm
 from logger import logger
@@ -63,7 +64,7 @@ def load_model():
 def load_avatar(avatar_id):
     #self.video_path = '' #video_path
     #self.bbox_shift = opt.bbox_shift
-    avatar_path = f"./data/avatars/{avatar_id}"
+    avatar_path = build_avatar_path(avatar_id)
     full_imgs_path = f"{avatar_path}/full_imgs" 
     coords_path = f"{avatar_path}/coords.pkl"
     latents_out_path= f"{avatar_path}/latents.pt"

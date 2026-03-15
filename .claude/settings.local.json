@@ -5,7 +5,8 @@
       "Bash(git -C \"D:/项目/avatarhuman\" log:*)",
       "Bash(git -C \"D:/项目/avatarhuman\" branch -a)",
       "Bash(git -C \"D:/项目/avatarhuman\" diff .gitignore)",
-      "Bash(git -C \"D:/项目/avatarhuman\" diff app.py)"
+      "Bash(git -C \"D:/项目/avatarhuman\" diff app.py)",
+      "Bash(git add:*)"
     ]
   }
 }

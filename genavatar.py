@@ -7,6 +7,7 @@ from glob import glob
 import torch
 import pickle
 import face_detection
+from backend.domain.paths import build_avatar_path
 
 
 parser = argparse.ArgumentParser(description='Inference code to lip-sync videos in the wild using Wav2Lip models')
@@ -100,7 +101,7 @@ def face_detect(images):
 	return results 
 
 if __name__ == "__main__":
-    avatar_path = f"./results/avatars/{args.avatar_id}"
+    avatar_path = build_avatar_path(args.avatar_id)
     full_imgs_path = f"{avatar_path}/full_imgs" 
     face_imgs_path = f"{avatar_path}/face_imgs" 
     coords_path = f"{avatar_path}/coords.pkl"

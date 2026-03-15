@@ -1,8 +1,37 @@
-# LiveTalking 项目架构设计文档 (Wav2Lip 模型)
+# LiveTalking 项目架构设计文档
+
+> 2026-03 重构说明：当前仓库已经开始从单文件 `app.py` 入口演进为分层后端结构。`app.py` 现在作为组合入口，核心应用壳层迁移到 `backend/` 目录；旧的模型实现文件如 `lipreal.py`、`musereal.py`、`lightreal.py` 仍保留为运行时能力层。
+
+## 0. 当前重构状态
+
+### 0.1 后端分层
+
+- `backend/bootstrap/`
+  - CLI 参数解析、应用创建、依赖装配。
+- `backend/api/`
+  - HTTP handler 与兼容路由注册。
+- `backend/application/`
+  - `SessionManager`、`SessionService`、`AvatarOrchestrator`。
+- `backend/domain/`
+  - 配置模型、路径契约、运行时接口、错误类型。
+- `backend/infrastructure/`
+  - 运行时工厂、TTS 工厂、LLM 适配器。
+
+### 0.2 兼容契约
+
+- 后端同时支持根路径接口和 `/avatarhuman/*` 兼容前缀。
+- 静态资源同时可从 `/` 和 `/avatarhuman/` 访问，便于兼容现有页面与 Nginx 代理。
+- 头像数据目录统一为 `data/avatars/<avatar_id>`；生成脚本与运行时应共享这一契约。
+
+### 0.3 第一阶段仍保留的旧实现
+
+- `lipreal.py`、`musereal.py`、`lightreal.py` 的推理主循环尚未重写。
+- `webrtc.py` 仍承担实际 `aiortc` track 适配。
+- 前端 `web/` 目录尚未迁移为独立工程，但后端已开始为前缀兼容和配置收敛提供基础。
 
 ## 1. 系统概述
 
-LiveTalking 是一个基于 WebRTC 的实时数字人/虚拟主播系统。使用 wav2lip 模型实现口型同步，支持多用户并发访问和 可与多种 TTS 引擎和 和 LLM 服务集成。
+LiveTalking 是一个基于 WebRTC 的实时数字人/虚拟主播系统，当前支持 `wav2lip`、`musetalk`、`ultralight` 多种运行时模型，并可与多种 TTS 引擎和 LLM 服务集成。
 
 ### 1.1 技术栈
 
@@ -10,7 +39,7 @@ LiveTalking 是一个基于 WebRTC 的实时数字人/虚拟主播系统。使�
 |------|------|
 | 后端框架 | aiohttp (异步 Web 框架) |
 | 实时通信 | aiortc (Python WebRTC 实现) |
-| 深度学习 | PyTorch, Wav2Lip |
+| 深度学习 | PyTorch, Wav2Lip / MuseTalk / Ultralight |
 | 音频处理 | librosa, scipy |
 | TTS | edge-tts (默认), 多种可选 |
 | 前端 | 原生 JavaScript, WebRTC API |
@@ -28,21 +57,21 @@ LiveTalking 是一个基于 WebRTC 的实时数字人/虚拟主播系统。使�
                             │
                             ▼ HTTP/WebRTC
 ┌───────────────────────────┴─────────────────────────────────────────────────┐
-│                         app.py (主服务)                                    │
+│                    app.py + backend/* (主服务壳层)                         │
 │  ┌───────────────────────────────────────────────────────────────────────┐ │
 │  │                     aiohttp Web Server                               │ │
 │  │  端点: /offer, /human, /is_speaking, /humanaudio, /record              │ │
 │  └───────────────────────────────────────────────────────────────────────┘ │
 │  ┌───────────────────────────────────────────────────────────────────────┐ │
-│  │                     WebRTC Connection Manager                          │ │
+│  │                     SessionService / SessionManager                    │ │
 │  │  - RTCPeerConnection 管理                                              │ │
-│  │  - 会话管理 (nerfreals dict)                                           │ │
+│  │  - 会话生命周期与配置隔离                                              │ │
 │  └───────────────────────────────────────────────────────────────────────┘ │
 └───────────────────────────┬─────────────────────────────────────────────────┘
                             │
                             ▼ 创建实例
 ┌───────────────────────────┴─────────────────────────────────────────────────┐
-│                      LipReal (数字人实例)                                  │
+│                AvatarRuntime (LipReal / MuseReal / LightReal)             │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                  │
 │  │   BaseReal    │  │    LipASR     │  │    EdgeTTS    │                  │
 │  │   (基类)      │  │  (音频处理)   │  │   (语音合成)   │                  │

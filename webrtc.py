@@ -226,5 +226,11 @@ class HumanPlayer:
             #self.__container.close()
             self.__container = None
 
+    def close(self) -> None:
+        if self.__audio is not None and self.__audio.readyState == "live":
+            self.__audio.stop()
+        if self.__video is not None and self.__video.readyState == "live":
+            self.__video.stop()
+
     def __log_debug(self, msg: str, *args) -> None:
         mylogger.debug(f"HumanPlayer {msg}", *args)

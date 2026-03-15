@@ -37,6 +37,7 @@ from hubertasr import HubertASR
 import asyncio
 from av import AudioFrame, VideoFrame
 from basereal import BaseReal
+from backend.domain.paths import build_avatar_path
 
 #from imgcache import ImgCache
 
@@ -64,7 +65,7 @@ def load_model(opt):
     return audio_processor
 
 def load_avatar(avatar_id):
-    avatar_path = f"./data/avatars/{avatar_id}"
+    avatar_path = build_avatar_path(avatar_id)
     full_imgs_path = f"{avatar_path}/full_imgs" 
     face_imgs_path = f"{avatar_path}/face_imgs" 
     coords_path = f"{avatar_path}/coords.pkl" 

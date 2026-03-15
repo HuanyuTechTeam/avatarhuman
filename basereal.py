@@ -35,7 +35,7 @@ import soundfile as sf
 import av
 from fractions import Fraction
 
-from ttsreal import EdgeTTS,SovitsTTS,XTTS,CosyVoiceTTS,FishTTS,TencentTTS,indexTTS
+from backend.infrastructure.tts_factory import create_tts_from_options
 from logger import logger
 
 from tqdm import tqdm
@@ -48,26 +48,12 @@ def read_imgs(img_list):
     return frames
 
 class BaseReal:
-    def __init__(self, opt):
+    def __init__(self, opt, tts_factory=create_tts_from_options):
         self.opt = opt
         self.sample_rate = 16000
         self.chunk = self.sample_rate // opt.fps # 320 samples per chunk (20ms * 16000 / 1000)
         self.sessionid = self.opt.sessionid
-
-        if opt.tts == "edgetts":
-            self.tts = EdgeTTS(opt,self)
-        elif opt.tts == "gpt-sovits":
-            self.tts = SovitsTTS(opt,self)
-        elif opt.tts == "xtts":
-            self.tts = XTTS(opt,self)
-        elif opt.tts == "cosyvoice":
-            self.tts = CosyVoiceTTS(opt,self)
-        elif opt.tts == "fishtts":
-            self.tts = FishTTS(opt,self)
-        elif opt.tts == "tencent":
-            self.tts = TencentTTS(opt,self)
-        elif opt.tts == "index_tts":
-            self.tts = indexTTS(opt,self)
+        self.tts = tts_factory(opt, self)
         
         self.speaking = False
 
@@ -122,6 +108,10 @@ class BaseReal:
 
     def is_speaking(self)->bool:
         return self.speaking
+
+    def stop(self):
+        """Hook for managed session shutdown."""
+        return None
     
     def __loadcustom(self):
         for item in self.opt.customopt:

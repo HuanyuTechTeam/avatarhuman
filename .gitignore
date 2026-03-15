@@ -73,7 +73,7 @@ htmlcov/
 data/
 *.bat
 *.log
-models/
+/models/
 wav2lip/results/
 
 # Temporary Files

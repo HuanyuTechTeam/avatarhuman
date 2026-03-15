@@ -7,6 +7,6 @@
       "prompt_name": "default"
   },
   "voice": {
-    "defaultVoiceId": "model_man_oldman01.wav"
+    "defaultVoiceId": ""
   }
 }

@@ -294,7 +294,7 @@ async function loadConfig() {
            "prompt_name": "default"
              },
         "voice": {
-          "defaultVoiceId": "model_man_oldman01.wav"
+          "defaultVoiceId": ""
           }
     };
   }
@@ -533,28 +533,34 @@ function InsertMessage(type, v, state) {
         // 发送消息
         if (state) {
             // 打断
+            const payload = {
+                text: v,
+                type: 'echo',
+                interrupt: true,
+                sessionid: sessionid,
+            };
+            if (voice_id) {
+                payload.voice_id = voice_id;
+            }
             fetch('/avatarhuman/human', {
-                body: JSON.stringify({
-                    text: v,
-                    type: 'echo',
-                    interrupt: true,
-                    sessionid: sessionid,
-                    voice_id: voice_id,
-                }),
+                body: JSON.stringify(payload),
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 method: 'POST'
             });
         } else {
+            const payload = {
+                text: v,
+                type: 'echo',
+                interrupt: false,
+                sessionid: sessionid,
+            };
+            if (voice_id) {
+                payload.voice_id = voice_id;
+            }
             fetch('/avatarhuman/human', {
-                body: JSON.stringify({
-                    text: v,
-                    type: 'echo',
-                    interrupt: false,
-                    sessionid: sessionid,
-                    voice_id: voice_id,
-                }),
+                body: JSON.stringify(payload),
                 headers: {
                     'Content-Type': 'application/json'
                 },

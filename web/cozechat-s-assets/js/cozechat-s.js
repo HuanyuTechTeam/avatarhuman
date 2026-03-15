@@ -305,7 +305,7 @@ async function loadConfig() {
         botId: "7401082582928588841"
       },
       voice: {
-        defaultVoiceId: "123.wav"
+        defaultVoiceId: ""
       }
     };
   }
@@ -570,28 +570,34 @@ function InsertMessage(type, v, state) {
         // 发送消息到后端进行语音合成（保留语音合成功能）
         if (state) {
             // 打断
+            const payload = {
+                text: v,
+                type: 'echo',
+                interrupt: true,
+                sessionid: sessionid,
+            };
+            if (voice_id) {
+                payload.voice_id = voice_id;
+            }
             fetch('/avatarhuman/human', {
-                body: JSON.stringify({
-                    text: v,
-                    type: 'echo',
-                    interrupt: true,
-                    sessionid: sessionid,
-                    voice_id: voice_id,
-                }),
+                body: JSON.stringify(payload),
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 method: 'POST'
             });
         } else {
+            const payload = {
+                text: v,
+                type: 'echo',
+                interrupt: false,
+                sessionid: sessionid,
+            };
+            if (voice_id) {
+                payload.voice_id = voice_id;
+            }
             fetch('/avatarhuman/human', {
-                body: JSON.stringify({
-                    text: v,
-                    type: 'echo',
-                    interrupt: false,
-                    sessionid: sessionid,
-                    voice_id: voice_id,
-                }),
+                body: JSON.stringify(payload),
                 headers: {
                     'Content-Type': 'application/json'
                 },

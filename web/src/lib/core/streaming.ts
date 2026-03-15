@@ -1,23 +1,27 @@
 const SENTENCE_PUNCTUATION = /[。！？!?；;，,]/;
 
-export function readJsonAssetFromText(text) {
-  return JSON.parse(text);
+export function readJsonAssetFromText<T>(text: string): T {
+  return JSON.parse(text) as T;
 }
 
-export function consumeSseJsonBuffer(buffer, eventName = null) {
+export function consumeSseJsonBuffer(
+  buffer: string,
+  eventName: string | null = null,
+): { messages: unknown[]; remainder: string } {
   const normalized = buffer.replace(/\r\n/g, "\n");
   const blocks = normalized.split("\n\n");
   const hasCompleteTerminator = normalized.endsWith("\n\n");
-  const remainder = hasCompleteTerminator ? "" : blocks.pop() ?? "";
-  const messages = [];
+  const remainder = hasCompleteTerminator ? "" : (blocks.pop() ?? "");
+  const messages: unknown[] = [];
 
   for (const block of blocks) {
     if (!block.trim()) {
       continue;
     }
 
-    let blockEventName = null;
-    const dataLines = [];
+    let blockEventName: string | null = null;
+    const dataLines: string[] = [];
+
     for (const line of block.split("\n")) {
       if (line.startsWith("event:")) {
         blockEventName = line.slice("event:".length).trim();
@@ -45,13 +49,16 @@ export function consumeSseJsonBuffer(buffer, eventName = null) {
   return { messages, remainder };
 }
 
-export function extractSseJsonMessages(buffer, eventName = null) {
-  return consumeSseJsonBuffer(`${buffer}\n\n`, eventName).messages;
+export function extractSseJsonMessages<T>(buffer: string, eventName: string | null = null): T[] {
+  return consumeSseJsonBuffer(`${buffer}\n\n`, eventName).messages as T[];
 }
 
-export function splitTextByPunctuation(text, remainder = "") {
+export function splitTextByPunctuation(
+  text: string,
+  remainder = "",
+): { sentences: string[]; remainder: string } {
   const combined = `${remainder}${text}`;
-  const sentences = [];
+  const sentences: string[] = [];
   let cursor = "";
 
   for (const char of combined) {

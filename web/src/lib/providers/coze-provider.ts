@@ -1,27 +1,43 @@
-import { consumeSseJsonBuffer } from "../core/streaming.mjs";
+import { consumeSseJsonBuffer } from "@/lib/core/streaming";
+import type { Provider, ProviderParseResult, StreamReplyHandlers } from "@/types/avatar";
 
-export function createCozeProvider({ token, botId, fetchImpl = fetch }) {
+interface CreateCozeProviderOptions {
+  endpoint: string;
+  fetchImpl?: typeof fetch;
+}
+
+interface CozeDeltaMessage {
+  type?: string;
+  content?: string;
+}
+
+export function createCozeProvider({
+  endpoint,
+  fetchImpl = fetch,
+}: CreateCozeProviderOptions): Provider & {
+  getConversationId(): string;
+  parseChunk(chunk: string, buffer?: string): ProviderParseResult;
+} {
   let conversationId = "";
 
-  async function ensureConversation() {
+  async function ensureConversation(): Promise<string> {
     if (conversationId) {
       return conversationId;
     }
 
-    const response = await fetchImpl("https://api.coze.cn/v1/conversation/create", {
+    const response = await fetchImpl(`${endpoint}/conversation/create`, {
       method: "POST",
       headers: {
-        Authorization: token,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ bot_id: botId }),
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
       throw new Error("Coze conversation create failed");
     }
 
-    const payload = await response.json();
+    const payload = (await response.json()) as { data?: { id?: string } };
     conversationId = payload?.data?.id ?? "";
     if (!conversationId) {
       throw new Error("Coze conversation id missing");
@@ -29,51 +45,32 @@ export function createCozeProvider({ token, botId, fetchImpl = fetch }) {
     return conversationId;
   }
 
-  function buildChatRequest(text) {
-    return {
-      url: conversationId
-        ? `https://api.coze.cn/v3/chat?conversation_id=${conversationId}`
-        : "https://api.coze.cn/v3/chat",
-      headers: {
-        Authorization: token,
-        "Content-Type": "application/json",
-      },
-      body: {
-        bot_id: botId,
-        user_id: "1",
-        stream: true,
-        auto_save_history: true,
-        additional_messages: [
-          {
-            role: "user",
-            content: text,
-            content_type: "text",
-          },
-        ],
-      },
-    };
-  }
-
-  function parseChunk(chunk, buffer = "") {
+  function parseChunk(chunk: string, buffer = ""): ProviderParseResult {
     const result = consumeSseJsonBuffer(`${buffer}${chunk}`, "conversation.message.delta");
+    const contents = (result.messages as CozeDeltaMessage[])
+      .filter((item) => item.type === "answer" && item.content)
+      .map((item) => item.content as string);
+
     return {
-      contents: result.messages
-        .filter((item) => item.type === "answer" && item.content)
-        .map((item) => item.content),
+      contents,
       remainder: result.remainder,
     };
   }
 
-  async function streamReply(text, handlers = {}) {
+  async function streamReply(text: string, handlers: StreamReplyHandlers = {}): Promise<void> {
     const { onText = () => {}, onComplete = () => {}, onError = () => {}, signal } = handlers;
 
     try {
-      await ensureConversation();
-      const request = buildChatRequest(text);
-      const response = await fetchImpl(request.url, {
+      const currentConversationId = await ensureConversation();
+      const response = await fetchImpl(`${endpoint}/chat`, {
         method: "POST",
-        headers: request.headers,
-        body: JSON.stringify(request.body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          conversationId: currentConversationId,
+        }),
         signal,
       });
 
@@ -89,6 +86,7 @@ export function createCozeProvider({ token, botId, fetchImpl = fetch }) {
         if (signal?.aborted) {
           return;
         }
+
         const { done, value } = await reader.read();
         if (done) {
           await Promise.resolve(onComplete());
@@ -98,6 +96,7 @@ export function createCozeProvider({ token, botId, fetchImpl = fetch }) {
         const chunkText = decoder.decode(value, { stream: true });
         const parsed = parseChunk(chunkText, buffer);
         buffer = parsed.remainder;
+
         for (const content of parsed.contents) {
           if (signal?.aborted) {
             return;
@@ -115,13 +114,10 @@ export function createCozeProvider({ token, botId, fetchImpl = fetch }) {
 
   return {
     kind: "coze",
-    buildChatRequest,
     getConversationId() {
       return conversationId;
     },
-    parseChunk(chunk) {
-      return parseChunk(chunk).contents;
-    },
+    parseChunk,
     resetConversation() {
       conversationId = "";
     },

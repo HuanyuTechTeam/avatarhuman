@@ -1,4 +1,22 @@
-import { consumeSseJsonBuffer } from "../core/streaming.mjs";
+import { consumeSseJsonBuffer } from "@/lib/core/streaming";
+import type { Provider, ProviderParseResult, StreamReplyHandlers } from "@/types/avatar";
+
+interface CreateLangchainProviderOptions {
+  kbName: string;
+  model: string;
+  scoreThreshold: number;
+  promptName: string;
+  endpoint?: string;
+  fetchImpl?: typeof fetch;
+}
+
+interface LangchainDeltaMessage {
+  choices?: Array<{
+    delta?: {
+      content?: string;
+    };
+  }>;
+}
 
 export function createLangchainProvider({
   kbName,
@@ -7,8 +25,11 @@ export function createLangchainProvider({
   promptName,
   endpoint = "/llm/chat/kb_chat",
   fetchImpl = fetch,
-}) {
-  function buildChatRequest(text) {
+}: CreateLangchainProviderOptions): Provider & {
+  buildChatRequest(text: string): { url: string; headers: HeadersInit; body: Record<string, unknown> };
+  parseChunk(chunk: string, buffer?: string): ProviderParseResult;
+} {
+  function buildChatRequest(text: string) {
     return {
       url: endpoint,
       headers: {
@@ -41,18 +62,19 @@ export function createLangchainProvider({
     };
   }
 
-  function parseChunk(chunk, buffer = "") {
+  function parseChunk(chunk: string, buffer = ""): ProviderParseResult {
     const result = consumeSseJsonBuffer(`${buffer}${chunk}`);
-    const contents = result.messages
+    const contents = (result.messages as LangchainDeltaMessage[])
       .map((item) => item?.choices?.[0]?.delta?.content)
-      .filter(Boolean);
+      .filter((value): value is string => Boolean(value));
+
     return {
       contents,
       remainder: result.remainder,
     };
   }
 
-  async function streamReply(text, handlers = {}) {
+  async function streamReply(text: string, handlers: StreamReplyHandlers = {}): Promise<void> {
     const { onText = () => {}, onComplete = () => {}, onError = () => {}, signal } = handlers;
 
     try {
@@ -76,6 +98,7 @@ export function createLangchainProvider({
         if (signal?.aborted) {
           return;
         }
+
         const { done, value } = await reader.read();
         if (done) {
           await Promise.resolve(onComplete());
@@ -85,6 +108,7 @@ export function createLangchainProvider({
         const textChunk = decoder.decode(value, { stream: true });
         const parsed = parseChunk(textChunk, buffer);
         buffer = parsed.remainder;
+
         for (const content of parsed.contents) {
           if (signal?.aborted) {
             return;
@@ -103,9 +127,7 @@ export function createLangchainProvider({
   return {
     kind: "langchain",
     buildChatRequest,
-    parseChunk(chunk) {
-      return parseChunk(chunk).contents;
-    },
+    parseChunk,
     streamReply,
   };
 }

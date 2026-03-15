@@ -1,20 +1,13 @@
-import test from "node:test";
 import assert from "node:assert/strict";
+import test from "node:test";
 
-import {
-  buildApiUrl,
-  detectBackendPrefix,
-  normalizePath,
-} from "../web/modules/core/paths.mjs";
+import { buildApiUrl, detectBackendPrefix, normalizePath } from "../web/src/lib/core/paths";
 import {
   extractSseJsonMessages,
   readJsonAssetFromText,
   splitTextByPunctuation,
-} from "../web/modules/core/streaming.mjs";
-import {
-  createCozeProvider,
-  createLangchainProvider,
-} from "../web/modules/providers/index.mjs";
+} from "../web/src/lib/core/streaming";
+import { createCozeProvider, createLangchainProvider } from "../web/src/lib/providers";
 
 test("detectBackendPrefix uses avatarhuman prefix when page is mounted under proxy path", () => {
   assert.equal(detectBackendPrefix("/avatarhuman/cozechat-s.html"), "/avatarhuman");
@@ -28,7 +21,7 @@ test("buildApiUrl joins prefix and route safely", () => {
 });
 
 test("readJsonAssetFromText parses prompt payloads", () => {
-  const payload = readJsonAssetFromText('{"prompt":["a","b"]}');
+  const payload = readJsonAssetFromText<{ prompt: string[] }>('{"prompt":["a","b"]}');
   assert.deepEqual(payload.prompt, ["a", "b"]);
 });
 
@@ -41,10 +34,13 @@ test("extractSseJsonMessages reads Coze event payloads from one chunk", () => {
     'data:{"type":"answer","content":"世界"}',
   ].join("\n");
 
-  assert.deepEqual(extractSseJsonMessages(chunk, "conversation.message.delta"), [
-    { type: "answer", content: "你好" },
-    { type: "answer", content: "世界" },
-  ]);
+  assert.deepEqual(
+    extractSseJsonMessages<{ type: string; content: string }>(chunk, "conversation.message.delta"),
+    [
+      { type: "answer", content: "你好" },
+      { type: "answer", content: "世界" },
+    ],
+  );
 });
 
 test("splitTextByPunctuation flushes complete sentences and preserves remainder", () => {
@@ -53,31 +49,19 @@ test("splitTextByPunctuation flushes complete sentences and preserves remainder"
   assert.equal(result.remainder, "后续");
 });
 
-test("coze provider uses configured token and bot id", () => {
-  const provider = createCozeProvider({
-    token: "Bearer token",
-    botId: "bot-1",
-  });
-
-  assert.equal(provider.kind, "coze");
-  assert.equal(provider.buildChatRequest("hi").headers.Authorization, "Bearer token");
-  assert.equal(provider.buildChatRequest("hi").body.bot_id, "bot-1");
-});
-
-test("coze provider can reset its conversation state", async () => {
+test("coze provider stores conversation id through proxy workflow", async () => {
   let requestCount = 0;
   const provider = createCozeProvider({
-    token: "Bearer token",
-    botId: "bot-1",
+    endpoint: "/coze",
     fetchImpl: async (url) => {
       requestCount += 1;
-      if (url.includes("/conversation/create")) {
+      if (String(url).includes("/conversation/create")) {
         return {
           ok: true,
           async json() {
             return { data: { id: "conversation-1" } };
           },
-        };
+        } as Response;
       }
 
       return {
@@ -87,7 +71,7 @@ test("coze provider can reset its conversation state", async () => {
             controller.close();
           },
         }),
-      };
+      } as Response;
     },
   });
 
@@ -107,7 +91,7 @@ test("langchain provider reads delta content from SSE payloads", () => {
   });
   const chunk = 'data: {"choices":[{"delta":{"content":"测试"}}]}\n\n';
 
-  assert.deepEqual(provider.parseChunk(chunk), ["测试"]);
+  assert.deepEqual(provider.parseChunk(chunk).contents, ["测试"]);
 });
 
 test("langchain provider respects an injected endpoint", () => {

@@ -11,11 +11,11 @@ from logger import logger
 
 
 async def cleanup_partial_session(
-    session_manager: SessionManager,
-    session_id: int,
-    runtime: Any = None,
-    player: Any = None,
-    peer_connection: Any = None,
+        session_manager: SessionManager,
+        session_id: int,
+        runtime: Any = None,
+        player: Any = None,
+        peer_connection: Any = None,
 ) -> None:
     if session_manager.get(session_id) is not None:
         await session_manager.close_session(session_id)

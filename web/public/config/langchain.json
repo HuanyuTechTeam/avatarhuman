@@ -1,5 +1,10 @@
 {
-  "wakeWords": ["小度小度。", "小度小度", "小杜小杜。", "小杜小杜"],
+  "wakeWords": [
+    "小度小度。",
+    "小度小度",
+    "小杜小杜。",
+    "小杜小杜"
+  ],
   "langchain": {
     "kb_name": "test",
     "model": "qwen2.5-instruct",

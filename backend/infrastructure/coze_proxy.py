@@ -6,7 +6,6 @@ from typing import Any
 import aiohttp
 from aiohttp import web
 
-
 COZE_API_BASE = "https://api.coze.cn"
 
 
@@ -24,12 +23,12 @@ async def create_conversation() -> dict[str, Any]:
     token, bot_id = get_coze_credentials()
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            f"{COZE_API_BASE}/v1/conversation/create",
-            headers={
-                "Authorization": token,
-                "Content-Type": "application/json",
-            },
-            json={"bot_id": bot_id},
+                f"{COZE_API_BASE}/v1/conversation/create",
+                headers={
+                    "Authorization": token,
+                    "Content-Type": "application/json",
+                },
+                json={"bot_id": bot_id},
         ) as response:
             if response.status >= 400:
                 raise web.HTTPBadGateway(text=await response.text())

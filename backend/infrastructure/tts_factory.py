@@ -10,7 +10,6 @@ from ttsreal import (
     indexTTS,
 )
 
-
 TTS_REGISTRY = {
     "edgetts": EdgeTTS,
     "gpt-sovits": SovitsTTS,

@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LiveTalking is a real-time digital human/avatar system that enables interactive conversations with AI-powered avatars. It uses WebRTC for low-latency audio/video streaming and supports multiple lip-sync models and TTS engines.
+LiveTalking is a real-time digital human/avatar system that enables interactive conversations with AI-powered avatars.
+It uses WebRTC for low-latency audio/video streaming and supports multiple lip-sync models and TTS engines.
 
 ## Commands
 
@@ -23,17 +24,17 @@ python app.py --model ultralight --avatar_id <avatar_id>
 
 ### Key CLI Arguments
 
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--model` | wav2lip | Model type: wav2lip, musetalk, ultralight |
-| `--avatar_id` | avator_1 | Avatar ID in data/avatars/ |
-| `--tts` | edgetts | TTS engine: edgetts, gpt-sovits, xtts, cosyvoice, fishtts, tencent, index_tts |
-| `--REF_FILE` | zh-CN-YunxiaNeural | Voice reference (voice name for edgetts, file path for others) |
-| `--TTS_SERVER` | http://127.0.0.1:9880 | TTS server URL (for non-edgetts engines) |
-| `--listenport` | 8010 | Web server port |
-| `--max_session` | 8 | Maximum concurrent sessions |
-| `--batch_size` | 16 | Inference batch size |
-| `--transport` | webrtc | Transport: webrtc, rtmp, rtcpush |
+| Argument        | Default               | Description                                                                   |
+|-----------------|-----------------------|-------------------------------------------------------------------------------|
+| `--model`       | wav2lip               | Model type: wav2lip, musetalk, ultralight                                     |
+| `--avatar_id`   | avator_1              | Avatar ID in data/avatars/                                                    |
+| `--tts`         | edgetts               | TTS engine: edgetts, gpt-sovits, xtts, cosyvoice, fishtts, tencent, index_tts |
+| `--REF_FILE`    | zh-CN-YunxiaNeural    | Voice reference (voice name for edgetts, file path for others)                |
+| `--TTS_SERVER`  | http://127.0.0.1:9880 | TTS server URL (for non-edgetts engines)                                      |
+| `--listenport`  | 8010                  | Web server port                                                               |
+| `--max_session` | 8                     | Maximum concurrent sessions                                                   |
+| `--batch_size`  | 16                    | Inference batch size                                                          |
+| `--transport`   | webrtc                | Transport: webrtc, rtmp, rtcpush                                              |
 
 ### Generating Avatar Data
 
@@ -101,14 +102,14 @@ data/avatars/<avatar_id>/
 
 ### API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/offer` | POST | WebRTC SDP offer/answer exchange |
-| `/human` | POST | Send text for avatar to speak (type: echo/chat) |
-| `/humanaudio` | POST | Upload audio file for avatar |
-| `/is_speaking` | POST | Check if avatar is currently speaking |
-| `/set_audiotype` | POST | Set custom audio/video state |
-| `/record` | POST | Start/stop recording |
+| Endpoint         | Method | Description                                     |
+|------------------|--------|-------------------------------------------------|
+| `/offer`         | POST   | WebRTC SDP offer/answer exchange                |
+| `/human`         | POST   | Send text for avatar to speak (type: echo/chat) |
+| `/humanaudio`    | POST   | Upload audio file for avatar                    |
+| `/is_speaking`   | POST   | Check if avatar is currently speaking           |
+| `/set_audiotype` | POST   | Set custom audio/video state                    |
+| `/record`        | POST   | Start/stop recording                            |
 
 ### Environment Variables
 
@@ -119,13 +120,14 @@ data/avatars/<avatar_id>/
 
 - **Required**: PyTorch, aiohttp, aiortc, opencv-python, edge_tts
 - **Model-specific**:
-  - wav2lip: models/wav2lip.pth
-  - musetalk: musetalk/ package (external)
+    - wav2lip: models/wav2lip.pth
+    - musetalk: musetalk/ package (external)
 - **External services**: ASR service (port 50000), optional LLM/TTS servers
 
 ## Frontend
 
 Web interface files in `web/`:
+
 - `webrtcapi.html` - Basic WebRTC client
 - `cozechat-s.html` - Coze API integration client
 - `langchain-s.html` - LangChain integration client

@@ -3,9 +3,9 @@
 ## 当前入口
 
 - `web/cozechat-s.html`
-  - 页面入口脚本改为 `web/entries/cozechat-s.mjs`
+    - 页面入口脚本改为 `web/entries/cozechat-s.mjs`
 - `web/langchain-s.html`
-  - 页面入口脚本改为 `web/entries/langchain-s.mjs`
+    - 页面入口脚本改为 `web/entries/langchain-s.mjs`
 
 这两个入口现在只负责：
 
@@ -19,26 +19,26 @@
 ### `web/modules/core/`
 
 - `paths.mjs`
-  - 统一处理根路径与 `/avatarhuman` 兼容前缀
+    - 统一处理根路径与 `/avatarhuman` 兼容前缀
 - `avatar-api.mjs`
-  - 封装 `/offer`、`/human`、`/is_speaking` 与静态 JSON 读取
+    - 封装 `/offer`、`/human`、`/is_speaking` 与静态 JSON 读取
 - `webrtc-client.mjs`
-  - 封装浏览器侧 WebRTC offer/answer 流程
+    - 封装浏览器侧 WebRTC offer/answer 流程
 - `streaming.mjs`
-  - 处理 SSE/流式文本解析和按标点断句
+    - 处理 SSE/流式文本解析和按标点断句
 - `config-loader.mjs`
-  - 统一读取配置文件并提供回退值
+    - 统一读取配置文件并提供回退值
 - `avatar-page.mjs`
-  - 负责页面装配：提示词、消息列表、录音、VAD、状态轮询、文本提交流程
+    - 负责页面装配：提示词、消息列表、录音、VAD、状态轮询、文本提交流程
 
 ### `web/modules/providers/`
 
 - `coze-provider.mjs`
-  - Coze 会话创建、流式回复解析
+    - Coze 会话创建、流式回复解析
 - `langchain-provider.mjs`
-  - LangChain/知识库接口调用与流式回复解析
+    - LangChain/知识库接口调用与流式回复解析
 - `index.mjs`
-  - provider 导出聚合
+    - provider 导出聚合
 
 ## 后端契约对接
 

@@ -1,8 +1,8 @@
-import torch
 from torch import nn
 from torch.nn import functional as F
-import pdb
+
 from .conv import Conv2d
+
 
 class SyncNet_color(nn.Module):
     def __init__(self):
@@ -30,7 +30,7 @@ class SyncNet_color(nn.Module):
 
             Conv2d(512, 512, kernel_size=3, stride=2, padding=1),
             Conv2d(512, 512, kernel_size=3, stride=1, padding=0),
-            Conv2d(512, 512, kernel_size=1, stride=1, padding=0),)
+            Conv2d(512, 512, kernel_size=1, stride=1, padding=0), )
 
         self.audio_encoder = nn.Sequential(
             Conv2d(1, 32, kernel_size=3, stride=1, padding=1),
@@ -50,17 +50,16 @@ class SyncNet_color(nn.Module):
             Conv2d(256, 256, kernel_size=3, stride=1, padding=1, residual=True),
 
             Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
-            Conv2d(512, 512, kernel_size=1, stride=1, padding=0),)
+            Conv2d(512, 512, kernel_size=1, stride=1, padding=0), )
 
-    def forward(self, audio_sequences, face_sequences): # audio_sequences := (B, dim, T)
+    def forward(self, audio_sequences, face_sequences):  # audio_sequences := (B, dim, T)
         face_embedding = self.face_encoder(face_sequences)
         audio_embedding = self.audio_encoder(audio_sequences)
 
-        audio_embedding = audio_embedding.view(audio_embedding.size(0), -1)#[4, 512]
-        face_embedding = face_embedding.view(face_embedding.size(0), -1)   #[4, 512]
+        audio_embedding = audio_embedding.view(audio_embedding.size(0), -1)  # [4, 512]
+        face_embedding = face_embedding.view(face_embedding.size(0), -1)  # [4, 512]
 
-        audio_embedding = F.normalize(audio_embedding, p=2, dim=1)         #按照宽度方向进行l2归一化  
+        audio_embedding = F.normalize(audio_embedding, p=2, dim=1)  # 按照宽度方向进行l2归一化
         face_embedding = F.normalize(face_embedding, p=2, dim=1)
-
 
         return audio_embedding, face_embedding

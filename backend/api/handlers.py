@@ -44,9 +44,9 @@ def require_field(params: dict, field_name: str):
 
 
 def create_handler_bundle(
-    session_service,
-    orchestrator: AvatarOrchestrator,
-    session_manager: SessionManager,
+        session_service,
+        orchestrator: AvatarOrchestrator,
+        session_manager: SessionManager,
 ) -> HandlerBundle:
     async def offer(request: web.Request) -> web.Response:
         try:

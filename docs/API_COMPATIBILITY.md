@@ -5,7 +5,8 @@
 当前后端同时支持两套访问方式，便于兼容现有静态页面和 Nginx 代理：
 
 - 根路径：`/offer`、`/human`、`/humanaudio`、`/set_audiotype`、`/record`、`/is_speaking`
-- 兼容前缀：`/avatarhuman/offer`、`/avatarhuman/human`、`/avatarhuman/humanaudio`、`/avatarhuman/set_audiotype`、`/avatarhuman/record`、`/avatarhuman/is_speaking`
+- 兼容前缀：`/avatarhuman/offer`、`/avatarhuman/human`、`/avatarhuman/humanaudio`、`/avatarhuman/set_audiotype`、
+  `/avatarhuman/record`、`/avatarhuman/is_speaking`
 
 静态资源也同时支持：
 
@@ -40,17 +41,17 @@
 ## 自定义状态与录制
 
 - `POST /set_audiotype`
-  - `sessionid`
-  - `audiotype`
-  - `reinit`
+    - `sessionid`
+    - `audiotype`
+    - `reinit`
 - `POST /record`
-  - `sessionid`
-  - `type`: `start_record` 或 `end_record`
+    - `sessionid`
+    - `type`: `start_record` 或 `end_record`
 
 ## 状态查询
 
 - `POST /is_speaking`
-  - `sessionid`
+    - `sessionid`
 - 响应中 `data` 字段表示当前数字人是否正在播报
 
 ## 头像数据目录契约

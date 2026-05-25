@@ -1,21 +1,22 @@
 # LiveTalking 项目架构设计文档
 
-> 2026-03 重构说明：当前仓库已经开始从单文件 `app.py` 入口演进为分层后端结构。`app.py` 现在作为组合入口，核心应用壳层迁移到 `backend/` 目录；旧的模型实现文件如 `lipreal.py`、`musereal.py`、`lightreal.py` 仍保留为运行时能力层。
+> 2026-03 重构说明：当前仓库已经开始从单文件 `app.py` 入口演进为分层后端结构。`app.py` 现在作为组合入口，核心应用壳层迁移到
+`backend/` 目录；旧的模型实现文件如 `lipreal.py`、`musereal.py`、`lightreal.py` 仍保留为运行时能力层。
 
 ## 0. 当前重构状态
 
 ### 0.1 后端分层
 
 - `backend/bootstrap/`
-  - CLI 参数解析、应用创建、依赖装配。
+    - CLI 参数解析、应用创建、依赖装配。
 - `backend/api/`
-  - HTTP handler 与兼容路由注册。
+    - HTTP handler 与兼容路由注册。
 - `backend/application/`
-  - `SessionManager`、`SessionService`、`AvatarOrchestrator`。
+    - `SessionManager`、`SessionService`、`AvatarOrchestrator`。
 - `backend/domain/`
-  - 配置模型、路径契约、运行时接口、错误类型。
+    - 配置模型、路径契约、运行时接口、错误类型。
 - `backend/infrastructure/`
-  - 运行时工厂、TTS 工厂、LLM 适配器。
+    - 运行时工厂、TTS 工厂、LLM 适配器。
 
 ### 0.2 兼容契约
 
@@ -31,18 +32,19 @@
 
 ## 1. 系统概述
 
-LiveTalking 是一个基于 WebRTC 的实时数字人/虚拟主播系统，当前支持 `wav2lip`、`musetalk`、`ultralight` 多种运行时模型，并可与多种 TTS 引擎和 LLM 服务集成。
+LiveTalking 是一个基于 WebRTC 的实时数字人/虚拟主播系统，当前支持 `wav2lip`、`musetalk`、`ultralight` 多种运行时模型，并可与多种
+TTS 引擎和 LLM 服务集成。
 
 ### 1.1 技术栈
 
-| 层级 | 技术 |
-|------|------|
-| 后端框架 | aiohttp (异步 Web 框架) |
-| 实时通信 | aiortc (Python WebRTC 实现) |
+| 层级   | 技术                                       |
+|------|------------------------------------------|
+| 后端框架 | aiohttp (异步 Web 框架)                      |
+| 实时通信 | aiortc (Python WebRTC 实现)                |
 | 深度学习 | PyTorch, Wav2Lip / MuseTalk / Ultralight |
-| 音频处理 | librosa, scipy |
-| TTS | edge-tts (默认), 多种可选 |
-| 前端 | 原生 JavaScript, WebRTC API |
+| 音频处理 | librosa, scipy                           |
+| TTS  | edge-tts (默认), 多种可选                      |
+| 前端   | 原生 JavaScript, WebRTC API                |
 
 ### 1.2 系统架构图
 
@@ -103,14 +105,14 @@ avatar: tuple                                # 预加载的头像数据
 
 #### API 端点
 
-| 端点 | 方法 | 功能 |
-|------|------|------|
-| `/offer` | POST | WebRTC SDP 协商，建立连接 |
-| `/human` | POST | 发送文本让数字人播报 |
-| `/humanaudio` | POST | 上传音频文件 |
-| `/is_speaking` | POST | 查询数字人是否在播报 |
-| `/record` | POST | 开始/停止录制 |
-| `/set_audiotype` | POST | 设置自定义音频/视频状态 |
+| 端点               | 方法   | 功能                 |
+|------------------|------|--------------------|
+| `/offer`         | POST | WebRTC SDP 协商，建立连接 |
+| `/human`         | POST | 发送文本让数字人播报         |
+| `/humanaudio`    | POST | 上传音频文件             |
+| `/is_speaking`   | POST | 查询数字人是否在播报         |
+| `/record`        | POST | 开始/停止录制            |
+| `/set_audiotype` | POST | 设置自定义音频/视频状态       |
 
 #### 启动流程
 
@@ -148,14 +150,14 @@ class BaseReal:
 
 #### 关键方法
 
-| 方法 | 功能 |
-|------|------|
-| `put_msg_txt(msg)` | 将文本送入 TTS 队列 |
-| `put_audio_frame(chunk)` | 将音频帧送入 ASR 队列 |
-| `flush_talk()` | 清空当前播报队列 |
-| `is_speaking()` | 返回是否正在播报 |
-| `start_recording()` | 开始录制视频 |
-| `stop_recording()` | 停止录制并合成视频 |
+| 方法                          | 功能              |
+|-----------------------------|-----------------|
+| `put_msg_txt(msg)`          | 将文本送入 TTS 队列    |
+| `put_audio_frame(chunk)`    | 将音频帧送入 ASR 队列   |
+| `flush_talk()`              | 清空当前播报队列        |
+| `is_speaking()`             | 返回是否正在播报        |
+| `start_recording()`         | 开始录制视频          |
+| `stop_recording()`          | 停止录制并合成视频       |
 | `mirror_index(size, index)` | 计算循环索引（正向-反向循环） |
 
 ---
@@ -273,14 +275,14 @@ def run_step():
 
 #### 关键参数
 
-| 参数 | 值 | 说明 |
-|------|-----|------|
-| fps | 50 | 每秒帧数 |
-| sample_rate | 16000 | 音频采样率 |
-| chunk | 320 | 每帧样本数 (20ms) |
-| stride_left_size | 10 | 左侧上下文帧数 |
-| stride_right_size | 10 | 右侧上下文帧数 |
-| batch_size | 16 | 批次大小 |
+| 参数                | 值     | 说明           |
+|-------------------|-------|--------------|
+| fps               | 50    | 每秒帧数         |
+| sample_rate       | 16000 | 音频采样率        |
+| chunk             | 320   | 每帧样本数 (20ms) |
+| stride_left_size  | 10    | 左侧上下文帧数      |
+| stride_right_size | 10    | 右侧上下文帧数      |
+| batch_size        | 16    | 批次大小         |
 
 ---
 
@@ -323,15 +325,15 @@ class EdgeTTS(BaseTTS):
 
 #### 支持的 TTS 引擎
 
-| 引擎 | 配置 | 说明 |
-|------|------|------|
-| edgetts | `--tts edgetts` | Microsoft Edge TTS (免费) |
-| gpt-sovits | `--tts gpt-sovits --TTS_SERVER url` | GPT-SoVITS 服务 |
-| xtts | `--tts xtts --TTS_SERVER url` | XTTS 服务 |
-| cosyvoice | `--tts cosyvoice --TTS_SERVER url` | CosyVoice 服务 |
-| fishtts | `--tts fishtts --TTS_SERVER url` | Fish Speech 服务 |
-| tencent | `--tts tencent` | 腾讯云 TTS |
-| index_tts | `--tts index_tts --TTS_SERVER url` | 自定义 TTS 服务 |
+| 引擎         | 配置                                  | 说明                      |
+|------------|-------------------------------------|-------------------------|
+| edgetts    | `--tts edgetts`                     | Microsoft Edge TTS (免费) |
+| gpt-sovits | `--tts gpt-sovits --TTS_SERVER url` | GPT-SoVITS 服务           |
+| xtts       | `--tts xtts --TTS_SERVER url`       | XTTS 服务                 |
+| cosyvoice  | `--tts cosyvoice --TTS_SERVER url`  | CosyVoice 服务            |
+| fishtts    | `--tts fishtts --TTS_SERVER url`    | Fish Speech 服务          |
+| tencent    | `--tts tencent`                     | 腾讯云 TTS                 |
+| index_tts  | `--tts index_tts --TTS_SERVER url`  | 自定义 TTS 服务              |
 
 ---
 
@@ -343,15 +345,16 @@ class EdgeTTS(BaseTTS):
 
 ```python
 class PlayerStreamTrack(MediaStreamTrack):
-    kind: str              # 'audio' 或 'video'
+    kind: str  # 'audio' 或 'video'
     _queue: asyncio.Queue  # 帧队列
-    _timestamp: int        # 当前时间戳
-    _start: float          # 起始时间
+    _timestamp: int  # 当前时间戳
+    _start: float  # 起始时间
+
 
 class HumanPlayer:
     __audio: PlayerStreamTrack
     __video: PlayerStreamTrack
-    __container: BaseReal   # LipReal 实例
+    __container: BaseReal  # LipReal 实例
 ```
 
 #### 时序控制
@@ -615,6 +618,7 @@ python genavatar.py --video_path <video.mp4> --avatar_id <new_id>
 ```
 
 处理流程:
+
 1. 视频解帧到 `full_imgs/`
 2. 人脸检测 (SFD)
 3. 裁剪人脸到 96x96 保存到 `face_imgs/`
@@ -686,14 +690,14 @@ python app.py \
 
 ### 6.2 关键参数说明
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `--fps` | 50 | 音频帧率，必须是50 |
-| `-l` | 10 | 滑动窗口左侧长度 (单位: 20ms) |
-| `-m` | 8 | 滑动窗口中间长度 |
-| `-r` | 10 | 滑动窗口右侧长度 |
-| `--batch_size` | 16 | 推理批次大小，影响延迟和吞吐量 |
-| `--max_session` | 8 | 最大并发会话数 |
+| 参数              | 默认值 | 说明                  |
+|-----------------|-----|---------------------|
+| `--fps`         | 50  | 音频帧率，必须是50          |
+| `-l`            | 10  | 滑动窗口左侧长度 (单位: 20ms) |
+| `-m`            | 8   | 滑动窗口中间长度            |
+| `-r`            | 10  | 滑动窗口右侧长度            |
+| `--batch_size`  | 16  | 推理批次大小，影响延迟和吞吐量     |
+| `--max_session` | 8   | 最大并发会话数             |
 
 ---
 
@@ -818,19 +822,19 @@ if opt.model == 'newmodel':
 
 ## 10. 文件清单
 
-| 文件 | 职责 |
-|------|------|
-| `app.py` | 主服务入口，HTTP/WebRTC 管理 |
-| `basereal.py` | 数字人基类 |
-| `lipreal.py` | Wav2Lip 模型实现 |
-| `lipasr.py` | Wav2Lip 音频处理 |
-| `baseasr.py` | 音频处理基类 |
-| `ttsreal.py` | TTS 实现 (多种引擎) |
-| `llm.py` | LLM 集成 (DashScope/Qwen) |
-| `webrtc.py` | WebRTC 轨道管理 |
-| `genavatar.py` | 头像数据生成 |
-| `logger.py` | 日志配置 |
-| `wav2lip/audio.py` | Mel 频谱提取 |
-| `wav2lip/hparams.py` | 音频处理参数 |
-| `wav2lip/face_detection/` | 人脸检测模块 |
-| `web/` | 前端文件 |
+| 文件                        | 职责                      |
+|---------------------------|-------------------------|
+| `app.py`                  | 主服务入口，HTTP/WebRTC 管理    |
+| `basereal.py`             | 数字人基类                   |
+| `lipreal.py`              | Wav2Lip 模型实现            |
+| `lipasr.py`               | Wav2Lip 音频处理            |
+| `baseasr.py`              | 音频处理基类                  |
+| `ttsreal.py`              | TTS 实现 (多种引擎)           |
+| `llm.py`                  | LLM 集成 (DashScope/Qwen) |
+| `webrtc.py`               | WebRTC 轨道管理             |
+| `genavatar.py`            | 头像数据生成                  |
+| `logger.py`               | 日志配置                    |
+| `wav2lip/audio.py`        | Mel 频谱提取                |
+| `wav2lip/hparams.py`      | 音频处理参数                  |
+| `wav2lip/face_detection/` | 人脸检测模块                  |
+| `web/`                    | 前端文件                    |

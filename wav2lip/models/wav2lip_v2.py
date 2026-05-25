@@ -1,7 +1,6 @@
 import torch
 from torch import nn
-from torch.nn import functional as F
-import pdb
+
 from .conv import Conv2dTranspose, Conv2d, nonorm_Conv2d
 
 
@@ -89,13 +88,13 @@ class Wav2Lip(nn.Module):
         self.output_block = nn.Sequential(Conv2d(80, 32, kernel_size=3, stride=1, padding=1),
                                           nn.Conv2d(32, 3, kernel_size=1, stride=1, padding=0),
                                           nn.Sigmoid())
-        
+
     def audio_forward(self, audio_sequences, a_alpha=1.):
         audio_embedding = self.audio_encoder(audio_sequences)  # B, 512, 1, 1
         if a_alpha != 1.:
             audio_embedding *= a_alpha
         return audio_embedding
-    
+
     def inference(self, audio_embedding, face_sequences):
         feats = []
         x = face_sequences
@@ -126,12 +125,14 @@ class Wav2Lip(nn.Module):
 
         input_dim_size = len(face_sequences.size())
         if input_dim_size > 4:
-            audio_sequences = torch.cat([audio_sequences[:, i] for i in range(audio_sequences.size(1))], dim=0)#[bz, 5, 1, 80, 16]->[bz*5, 1, 80, 16]
-            face_sequences = torch.cat([face_sequences[:, :, i] for i in range(face_sequences.size(2))], dim=0)#[bz, 6, 5, 256, 256]->[bz*5, 6, 256, 256]
+            audio_sequences = torch.cat([audio_sequences[:, i] for i in range(audio_sequences.size(1))],
+                                        dim=0)  # [bz, 5, 1, 80, 16]->[bz*5, 1, 80, 16]
+            face_sequences = torch.cat([face_sequences[:, :, i] for i in range(face_sequences.size(2))],
+                                       dim=0)  # [bz, 6, 5, 256, 256]->[bz*5, 6, 256, 256]
 
         audio_embedding = self.audio_encoder(audio_sequences)  # [bz*5, 1, 80, 16]->[bz*5, 512, 1, 1]
         if a_alpha != 1.:
-            audio_embedding *= a_alpha                         #放大音频强度
+            audio_embedding *= a_alpha  # 放大音频强度
 
         feats = []
         x = face_sequences
@@ -151,11 +152,11 @@ class Wav2Lip(nn.Module):
 
             feats.pop()
 
-        x = self.output_block(x)                              #[bz*5, 80, 256, 256]->[bz*5, 3, 256, 256]
+        x = self.output_block(x)  # [bz*5, 80, 256, 256]->[bz*5, 3, 256, 256]
 
-        if input_dim_size > 4:                                #[bz*5, 3, 256, 256]->[B, 3, 5, 256, 256]
-            x = torch.split(x, B, dim=0)   
-            outputs = torch.stack(x, dim=2)   
+        if input_dim_size > 4:  # [bz*5, 3, 256, 256]->[B, 3, 5, 256, 256]
+            x = torch.split(x, B, dim=0)
+            outputs = torch.stack(x, dim=2)
 
         else:
             outputs = x
@@ -194,25 +195,25 @@ class Wav2Lip_disc_qual(nn.Module):
         self.binary_pred = nn.Sequential(nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0), nn.Sigmoid())
         self.label_noise = .0
 
-    def get_lower_half(self, face_sequences):                      #取得输入图片的下半部分。
+    def get_lower_half(self, face_sequences):  # 取得输入图片的下半部分。
         return face_sequences[:, :, face_sequences.size(2) // 2:]
 
-    def to_2d(self, face_sequences):                               #将输入的图片序列连接起来，形成一个二维的tensor。
+    def to_2d(self, face_sequences):  # 将输入的图片序列连接起来，形成一个二维的tensor。
         B = face_sequences.size(0)
         face_sequences = torch.cat([face_sequences[:, :, i] for i in range(face_sequences.size(2))], dim=0)
         return face_sequences
 
-    def perceptual_forward(self, false_face_sequences):            #前传生成图像
-        false_face_sequences = self.to_2d(false_face_sequences)    #[bz, 3, 5, 256, 256]->[bz*5, 3, 256, 256]
-        false_face_sequences = self.get_lower_half(false_face_sequences)#[bz*5, 3, 256, 256]->[bz*5, 3, 128, 256]
+    def perceptual_forward(self, false_face_sequences):  # 前传生成图像
+        false_face_sequences = self.to_2d(false_face_sequences)  # [bz, 3, 5, 256, 256]->[bz*5, 3, 256, 256]
+        false_face_sequences = self.get_lower_half(false_face_sequences)  # [bz*5, 3, 256, 256]->[bz*5, 3, 128, 256]
 
         false_feats = false_face_sequences
-        for f in self.face_encoder_blocks:                         #[bz*5, 3, 128, 256]->[bz*5, 512, 1, 1]
+        for f in self.face_encoder_blocks:  # [bz*5, 3, 128, 256]->[bz*5, 512, 1, 1]
             false_feats = f(false_feats)
 
-        return self.binary_pred(false_feats).view(len(false_feats), -1) #[bz*5, 512, 1, 1]->[bz*5, 1, 1]
+        return self.binary_pred(false_feats).view(len(false_feats), -1)  # [bz*5, 512, 1, 1]->[bz*5, 1, 1]
 
-    def forward(self, face_sequences):                             #前传真值图像
+    def forward(self, face_sequences):  # 前传真值图像
         face_sequences = self.to_2d(face_sequences)
         face_sequences = self.get_lower_half(face_sequences)
 

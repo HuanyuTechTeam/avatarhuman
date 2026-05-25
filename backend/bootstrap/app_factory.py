@@ -11,14 +11,14 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency in tests.
 
 
 def create_app(
-    session_service,
-    orchestrator,
-    session_manager,
-    static_path: str,
-    api_prefixes=("", "/avatarhuman"),
-    static_aliases=("/", "/avatarhuman/"),
+        session_service,
+        orchestrator,
+        session_manager,
+        static_path: str,
+        api_prefixes=("", "/avatarhuman"),
+        static_aliases=("/", "/avatarhuman/"),
 ) -> web.Application:
-    app = web.Application(client_max_size=1024**2 * 100)
+    app = web.Application(client_max_size=1024 ** 2 * 100)
     app.on_shutdown.append(lambda _app: session_service.close_all())
 
     handlers = create_handler_bundle(session_service, orchestrator, session_manager)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 
-
 AVATAR_ROOT = os.path.join("data", "avatars")
 
 

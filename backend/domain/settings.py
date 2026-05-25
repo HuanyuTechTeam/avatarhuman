@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Iterable, Sequence, Tuple
 
 
@@ -86,10 +86,10 @@ class AppSettings:
         )
 
     def build_session_options(
-        self,
-        session_id: int,
-        voice_id: str | None = None,
-        extra: dict[str, Any] | None = None,
+            self,
+            session_id: int,
+            voice_id: str | None = None,
+            extra: dict[str, Any] | None = None,
     ) -> argparse.Namespace:
         options = argparse.Namespace(
             fps=self.runtime.fps,

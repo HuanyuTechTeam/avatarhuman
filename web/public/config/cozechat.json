@@ -1,0 +1,18 @@
+{
+  "wakeWords": [
+    "小度小度。",
+    "小度小度",
+    "小杜小杜。",
+    "小杜小杜"
+  ],
+  "cozeApi": {
+    "endpoint": "/coze"
+  },
+  "voice": {
+    "defaultVoiceId": ""
+  },
+  "asr": {
+    "endpoint": "/asr/api/v1/asr"
+  },
+  "wakeResponseText": "你好，我在"
+}

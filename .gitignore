@@ -73,7 +73,7 @@ htmlcov/
 data/
 *.bat
 *.log
-models/
+/models/
 wav2lip/results/
 
 # Temporary Files
@@ -110,6 +110,7 @@ local.properties
 
 # Node.js (in case of frontend dependencies)
 node_modules/
+!web/src/lib/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

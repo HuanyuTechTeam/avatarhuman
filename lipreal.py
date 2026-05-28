@@ -16,6 +16,7 @@
 ###############################################################################
 
 import asyncio
+import copy
 import glob
 # from .utils import *
 import os
@@ -44,14 +45,6 @@ device = "cuda" if torch.cuda.is_available() else (
     "mps" if (hasattr(torch.backends, "mps") and torch.backends.mps.is_available()) else "cpu")
 print('Using {} for inference.'.format(device))
 
-if device == "cuda":
-    torch.backends.cudnn.benchmark = True
-    torch.backends.cudnn.allow_tf32 = True
-    torch.backends.cuda.matmul.allow_tf32 = True
-    set_matmul_precision = getattr(torch, "set_float32_matmul_precision", None)
-    if set_matmul_precision is not None:
-        set_matmul_precision("high")
-
 
 def _load(checkpoint_path):
     if device == 'cuda':
@@ -73,43 +66,7 @@ def load_model(path):
     model.load_state_dict(new_s)
 
     model = model.to(device)
-    if device == "cuda":
-        model = model.to(memory_format=torch.channels_last)
     return model.eval()
-
-
-def _prepare_face_tensor_cycle(face_list_cycle):
-    if not face_list_cycle:
-        raise ValueError("avatar face image list is empty")
-
-    face_batch = np.stack(face_list_cycle, axis=0)
-    face_tensor_nchw = torch.from_numpy(face_batch).permute(0, 3, 1, 2).contiguous()
-    face_tensor = torch.empty(
-        (face_tensor_nchw.shape[0], 6, face_tensor_nchw.shape[2], face_tensor_nchw.shape[3]),
-        dtype=torch.float32,
-    )
-    face_tensor[:, :3].copy_(face_tensor_nchw)
-    face_tensor[:, 3:].copy_(face_tensor_nchw)
-    face_tensor.div_(255.0)
-    face_tensor[:, :3, face_tensor.shape[2] // 2:] = 0
-    del face_tensor_nchw, face_batch
-
-    if device == "cuda":
-        try:
-            face_tensor = face_tensor.pin_memory().to(device, non_blocking=True)
-            face_tensor = face_tensor.contiguous(memory_format=torch.channels_last)
-            logger.info("preprocessed %d avatar face tensors on cuda", face_tensor.shape[0])
-            return face_tensor
-        except RuntimeError as exc:
-            logger.warning("failed to keep avatar face tensors on cuda, fallback to pinned CPU memory: %s", exc)
-            torch.cuda.empty_cache()
-            face_tensor = face_tensor.pin_memory()
-            logger.info("preprocessed %d avatar face tensors on pinned CPU memory", face_tensor.shape[0])
-            return face_tensor
-
-    face_tensor = face_tensor.to(device)
-    logger.info("preprocessed %d avatar face tensors on %s", face_tensor.shape[0], device)
-    return face_tensor
 
 
 def load_avatar(avatar_id):
@@ -127,20 +84,16 @@ def load_avatar(avatar_id):
     input_face_list = glob.glob(os.path.join(face_imgs_path, '*.[jpJP][pnPN]*[gG]'))
     input_face_list = sorted(input_face_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
     face_list_cycle = read_imgs(input_face_list)
-    face_tensor_cycle = _prepare_face_tensor_cycle(face_list_cycle)
 
-    return frame_list_cycle, face_list_cycle, coord_list_cycle, face_tensor_cycle
+    return frame_list_cycle, face_list_cycle, coord_list_cycle
 
 
 @torch.no_grad()
 def warm_up(batch_size, model, modelres):
     # 预热函数
     logger.info('warmup model...')
-    img_batch = torch.ones(batch_size, 6, modelres, modelres, device=device)
-    mel_batch = torch.ones(batch_size, 1, 80, 16, device=device)
-    if device == "cuda":
-        img_batch = img_batch.contiguous(memory_format=torch.channels_last)
-        mel_batch = mel_batch.contiguous(memory_format=torch.channels_last)
+    img_batch = torch.ones(batch_size, 6, modelres, modelres).to(device)
+    mel_batch = torch.ones(batch_size, 1, 80, 16).to(device)
     model(mel_batch, img_batch)
 
 
@@ -163,46 +116,14 @@ def __mirror_index(size, index):
         return size - res - 1
 
 
-def _mirror_indices(size, start, offsets):
-    cycle = size * 2
-    positions = (start + offsets) % cycle
-    return np.where(positions < size, positions, cycle - positions - 1)
-
-
-def _select_face_tensor_batch(face_tensor_cycle, indices):
-    index_tensor = torch.as_tensor(indices, dtype=torch.long, device=face_tensor_cycle.device)
-    img_batch = face_tensor_cycle.index_select(0, index_tensor)
-    if img_batch.device.type != device:
-        img_batch = img_batch.to(device, non_blocking=(device == "cuda"))
-    if device == "cuda":
-        img_batch = img_batch.contiguous(memory_format=torch.channels_last)
-    return img_batch
-
-
-def _mel_batch_to_tensor(mel_batch):
-    mel_array = np.asarray(mel_batch, dtype=np.float32)
-    mel_tensor = torch.from_numpy(mel_array).unsqueeze(1)
-    mel_tensor = mel_tensor.to(device, non_blocking=(device == "cuda"))
-    if device == "cuda":
-        mel_tensor = mel_tensor.contiguous(memory_format=torch.channels_last)
-    return mel_tensor
-
-
-def _pred_to_uint8_numpy(pred):
-    pred = pred.clamp(0.0, 1.0).mul(255.0).to(torch.uint8)
-    return pred.permute(0, 2, 3, 1).contiguous().cpu().numpy()
-
-
-@torch.inference_mode()
-def inference(quit_event, batch_size, face_tensor_cycle, audio_feat_queue, audio_out_queue, res_frame_queue, model):
+def inference(quit_event, batch_size, face_list_cycle, audio_feat_queue, audio_out_queue, res_frame_queue, model):
     # model = load_model("./models/wav2lip.pth")
     # input_face_list = glob.glob(os.path.join(face_imgs_path, '*.[jpJP][pnPN]*[gG]'))
     # input_face_list = sorted(input_face_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
     # face_list_cycle = read_imgs(input_face_list)
 
     # input_latent_list_cycle = torch.load(latents_out_path)
-    length = face_tensor_cycle.shape[0]
-    batch_offsets = np.arange(batch_size, dtype=np.int64)
+    length = len(face_list_cycle)
     index = 0
     count = 0
     counttime = 0
@@ -223,19 +144,32 @@ def inference(quit_event, batch_size, face_tensor_cycle, audio_feat_queue, audio
             if type == 0:
                 is_all_silence = False
 
-        batch_indices = _mirror_indices(length, index, batch_offsets)
         if is_all_silence:
-            for i, idx in enumerate(batch_indices):
-                res_frame_queue.put((None, int(idx), audio_frames[i * 2:i * 2 + 2]))
-            index = index + batch_size
+            for i in range(batch_size):
+                res_frame_queue.put((None, __mirror_index(length, index), audio_frames[i * 2:i * 2 + 2]))
+                index = index + 1
         else:
             # print('infer=======')
             t = time.perf_counter()
-            img_batch = _select_face_tensor_batch(face_tensor_cycle, batch_indices)
-            mel_batch = _mel_batch_to_tensor(mel_batch)
+            img_batch = []
+            for i in range(batch_size):
+                idx = __mirror_index(length, index + i)
+                face = face_list_cycle[idx]
+                img_batch.append(face)
+            img_batch, mel_batch = np.asarray(img_batch), np.asarray(mel_batch)
 
-            pred = model(mel_batch, img_batch)
-            pred = _pred_to_uint8_numpy(pred)
+            img_masked = img_batch.copy()
+            img_masked[:, face.shape[0] // 2:] = 0
+
+            img_batch = np.concatenate((img_masked, img_batch), axis=3) / 255.
+            mel_batch = np.reshape(mel_batch, [len(mel_batch), mel_batch.shape[1], mel_batch.shape[2], 1])
+
+            img_batch = torch.FloatTensor(np.transpose(img_batch, (0, 3, 1, 2))).to(device)
+            mel_batch = torch.FloatTensor(np.transpose(mel_batch, (0, 3, 1, 2))).to(device)
+
+            with torch.no_grad():
+                pred = model(mel_batch, img_batch)
+            pred = pred.cpu().numpy().transpose(0, 2, 3, 1) * 255.
 
             counttime += (time.perf_counter() - t)
             count += batch_size
@@ -246,8 +180,8 @@ def inference(quit_event, batch_size, face_tensor_cycle, audio_feat_queue, audio
                 counttime = 0
             for i, res_frame in enumerate(pred):
                 # self.__pushmedia(res_frame,loop,audio_track,video_track)
-                res_frame_queue.put((res_frame, int(batch_indices[i]), audio_frames[i * 2:i * 2 + 2]))
-            index = index + batch_size
+                res_frame_queue.put((res_frame, __mirror_index(length, index), audio_frames[i * 2:i * 2 + 2]))
+                index = index + 1
             # print('total batch time:',time.perf_counter()-starttime)
     logger.info('lipreal inference processor stop')
 
@@ -267,11 +201,7 @@ class LipReal(BaseReal):
         self.res_frame_queue = Queue(self.batch_size * 2)  # mp.Queue
         # self.__loadavatar()
         self.model = model
-        if len(avatar) == 3:
-            self.frame_list_cycle, self.face_list_cycle, self.coord_list_cycle = avatar
-            self.face_tensor_cycle = _prepare_face_tensor_cycle(self.face_list_cycle)
-        else:
-            self.frame_list_cycle, self.face_list_cycle, self.coord_list_cycle, self.face_tensor_cycle = avatar
+        self.frame_list_cycle, self.face_list_cycle, self.coord_list_cycle = avatar
 
         self.asr = LipASR(opt, self)
         self.asr.warm_up()
@@ -303,16 +233,12 @@ class LipReal(BaseReal):
             else:
                 self.speaking = True
                 bbox = self.coord_list_cycle[idx]
-                combine_frame = self.frame_list_cycle[idx].copy()
+                combine_frame = copy.deepcopy(self.frame_list_cycle[idx])
                 # combine_frame = copy.deepcopy(self.imagecache.get_img(idx))
                 y1, y2, x1, x2 = bbox
                 try:
-                    if res_frame.dtype != np.uint8:
-                        res_frame = res_frame.astype(np.uint8, copy=False)
-                    target_size = (x2 - x1, y2 - y1)
-                    if res_frame.shape[1::-1] != target_size:
-                        res_frame = cv2.resize(res_frame, target_size)
-                except Exception:
+                    res_frame = cv2.resize(res_frame.astype(np.uint8), (x2 - x1, y2 - y1))
+                except:
                     continue
                 # combine_frame = get_image(ori_frame,res_frame,bbox)
                 # t=time.perf_counter()
@@ -327,7 +253,7 @@ class LipReal(BaseReal):
 
             for audio_frame in audio_frames:
                 frame, type, eventpoint = audio_frame
-                frame = (frame * 32767).astype(np.int16, copy=False)
+                frame = (frame * 32767).astype(np.int16)
                 new_frame = AudioFrame(format='s16', layout='mono', samples=frame.shape[0])
                 new_frame.planes[0].update(frame.tobytes())
                 new_frame.sample_rate = 16000
@@ -347,7 +273,7 @@ class LipReal(BaseReal):
         process_thread = Thread(target=self.process_frames, args=(quit_event, loop, audio_track, video_track))
         process_thread.start()
 
-        Thread(target=inference, args=(quit_event, self.batch_size, self.face_tensor_cycle,
+        Thread(target=inference, args=(quit_event, self.batch_size, self.face_list_cycle,
                                        self.asr.feat_queue, self.asr.output_queue, self.res_frame_queue,
                                        self.model,)).start()  # mp.Process
 
@@ -365,10 +291,9 @@ class LipReal(BaseReal):
             # if video_track._queue.qsize()>=2*self.opt.batch_size:
             #     print('sleep qsize=',video_track._queue.qsize())
             #     time.sleep(0.04*video_track._queue.qsize()*0.8)
-            qsize = video_track._queue.qsize()
-            if qsize >= 5:
-                logger.debug('sleep qsize=%d', qsize)
-                time.sleep(0.04 * qsize * 0.8)
+            if video_track._queue.qsize() >= 5:
+                logger.debug('sleep qsize=%d', video_track._queue.qsize())
+                time.sleep(0.04 * video_track._queue.qsize() * 0.8)
 
             # delay = _starttime+_totalframe*0.04-time.perf_counter() #40ms
             # if delay > 0:
